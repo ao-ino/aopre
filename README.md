@@ -30,6 +30,7 @@ manim -s   scenes/derivative.py SecantToTangent  # 最後のフレームだけ P
 | `scenes/derivative.py` | `SecantToTangent` | 割線が接線に近づき、微分係数になる様子 |
 | `scenes/unit_circle.py` | `SineFromCircle` | 単位円上の点の高さが sin 波を描く |
 | `scenes/p257_parallelograms.py` | `Problem257` | 問題257: 平行線でできる平行四辺形の個数（6C2 × 7C2 = 315） |
+| `scenes/p96_4_river.py` | `River96_4` | 問題96-4: 流水算。上り・下りの速さの差＝流れ2つ分（時速1.25km） |
 
 ## 新しいシーンの書き方
 
