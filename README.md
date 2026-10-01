@@ -53,12 +53,13 @@ class MyScene(Scene):
 ```bash
 manim -qh scenes/p257_parallelograms.py Problem257                        # 映像 + 効果音タイミング(JSON)を出力
 python tools/add_audio.py media/videos/p257_parallelograms/1080p60/Problem257.mp4   # → Problem257_audio.mp4
-python tools/add_audio.py <動画> --style pop --bgm-volume 0.3             # BGM をポップに・音量調整
+python tools/add_audio.py <動画> --style cute                              # BGM をかわいい系に（pop / rock も可）
 ```
 
 - BGM・効果音はすべてコードで合成したオリジナルなので、著作権を気にせず使えます。
   - `rock`（既定）: 140 BPM、Am–F–C–G。歪みギター（左右）・ベース・ドラム、サビにリードギター
   - `pop`: 118 BPM、C–G–Am–F。エレピ・ベル系メロディ
+  - `cute`: 112 BPM（はねるリズム）、C–Am–F–G。オルゴールのメロディ・ウクレレ・ぽよんベース・指パッチン
 - 効果音が鳴る瞬間だけ BGM を少し下げる（ダッキング）ので、効果音が埋もれません。
 
 ### シーンで効果音を鳴らす

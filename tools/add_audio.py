@@ -1,7 +1,7 @@
 """動画に BGM と効果音を付ける（すべてコードで合成・著作権フリー）。
 
 使い方:
-    python tools/add_audio.py media/videos/xxx/1080p60/Scene.mp4 [--style rock|pop] [--bgm-volume 0.35]
+    python tools/add_audio.py media/videos/xxx/1080p60/Scene.mp4 [--style rock|pop|cute] [--bgm-volume 0.35]
 
 - 効果音: シーンが書き出した media/audio_events/<Scene>.json（SfxMixin）を読み、
   映像の時刻どおりにサンプル単位で配置する。
@@ -357,7 +357,118 @@ def compose_pop(dur, bpm=118):
     return tr.buf
 
 
-STYLES = {"rock": compose_rock, "pop": compose_pop}
+# ======================================================================
+# かわいい（オルゴール・ウクレレ・はねるリズム）
+# ======================================================================
+CUTE_PROG = [(48, [60, 64, 67]), (45, [60, 64, 69]), (41, [60, 65, 69]), (43, [59, 62, 67])]  # C-Am-F-G
+CUTE_MELODY_A = [  # (拍, MIDI, 長さ[拍]) 4小節。裏拍はスウィングでぴょこぴょこ
+    (0, 79, .5), (.5, 76, .5), (1, 79, .5), (1.5, 84, 1), (3, 81, .5), (3.5, 79, .5),
+    (4, 76, .5), (4.5, 72, .5), (5, 76, .5), (5.5, 81, 1), (7, 79, 1),
+    (8, 77, .5), (8.5, 81, .5), (9, 84, .5), (9.5, 81, .5), (10, 77, 1), (11, 76, .5), (11.5, 74, .5),
+    (12, 74, .5), (12.5, 79, .5), (13, 83, .5), (13.5, 86, .5), (14, 84, 2),
+]
+CUTE_MELODY_B = CUTE_MELODY_A[:-4] + [(12, 74, .5), (12.5, 76, .5), (13, 79, 1), (14, 72, 2)]
+SWING = 0.17   # 裏拍の遅れ（拍の割合）
+
+
+def swung(beat_pos):
+    return beat_pos + (SWING if abs(beat_pos % 1 - 0.5) < 1e-6 else 0)
+
+
+def music_box(m, dur):
+    """オルゴール／グロッケン風。高い倍音が速く減衰する。"""
+    t = tt(min(dur, 0.6) + 0.9)
+    f = midi_hz(m)
+    x = (np.sin(2 * np.pi * f * t) * np.exp(-t / 0.7)
+         + 0.45 * np.sin(2 * np.pi * 2.76 * f * t) * np.exp(-t / 0.12)
+         + 0.2 * np.sin(2 * np.pi * 5.4 * f * t) * np.exp(-t / 0.05))
+    return x * np.minimum(t / 0.002, 1) * 0.2
+
+
+def uke(m, dur):
+    """ウクレレ風のはじく音。"""
+    t = tt(dur + 0.2)
+    f = midi_hz(m)
+    x = sum(np.sin(2 * np.pi * k * f * t) * np.exp(-t * (6 + 5 * k)) / k for k in range(1, 6))
+    return x * np.minimum(t / 0.003, 1) * 0.11
+
+
+def boing(m, dur):
+    """ぽよんと跳ねるベース（ピッチが少し下がる）。"""
+    t = tt(dur)
+    f = midi_hz(m) * (1 + 0.25 * np.exp(-t / 0.02))
+    x = np.sin(2 * np.pi * np.cumsum(f) / SR)
+    return x * env(len(t), 0.004, dur * 0.5) * 0.5
+
+
+def snap():
+    t = tt(0.12)
+    x = highpass(rng.standard_normal(len(t)), 2500) * np.exp(-t / 0.015)
+    return x * 0.3
+
+
+def shaker():
+    t = tt(0.07)
+    return highpass(rng.standard_normal(len(t)), 6000) * env(len(t), 0.01, 0.02) * 0.12
+
+
+def soft_kick():
+    t = tt(0.25)
+    f = 60 + 60 * np.exp(-t / 0.03)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * env(len(t), 0.002, 0.08) * 0.6
+
+
+def compose_cute(dur, bpm=112):
+    beat = 60 / bpm
+    bar_len = 4 * beat
+    tr = Track(dur)
+    for bar in range(int(np.ceil(dur / bar_len))):
+        t0 = bar * bar_len
+        root, chord = CUTE_PROG[bar % 4]
+        intro = bar < 2
+        sec = (bar - 2) // 8 if not intro else -1
+        melody_on = not intro and sec % 2 == 0        # メロディ8小節 → 伴奏+合いの手8小節
+
+        def at(b):
+            return t0 + swung(b) * beat
+
+        # リズム（はねる 8 分）
+        if not intro:
+            for b in (0, 2):
+                tr.put(soft_kick(), at(b))
+            for b in (1, 3):
+                tr.put(snap(), at(b), pan=0.2)
+            for e in range(8):
+                tr.put(shaker(), at(e / 2), pan=-0.4, gain=1.0 if e % 2 else 0.6)
+
+        # ベース: 1・3 拍目にぽよん、裏でオクターブ上
+        if not intro:
+            for b, iv in ((0, 0), (1.5, 12), (2, 7), (3.5, 12)):
+                tr.put(boing(root - 12 + iv, beat * 0.45), at(b))
+
+        # ウクレレ: ジャ・カ・ジャカ のストローク
+        for b in ((0, 1, 1.5, 2.5, 3) if not intro else (0, 2)):
+            for k, m in enumerate(chord + [chord[0] + 12]):
+                tr.put(uke(m, beat * 0.8), at(b) + k * 0.012, pan=0.35)
+
+        # オルゴールのメロディ
+        if melody_on:
+            phrase = CUTE_MELODY_B if ((bar - 2) // 4) % 2 else CUTE_MELODY_A
+            part = (bar - 2) % 4
+            for st, m, d in phrase:
+                if part * 4 <= st < part * 4 + 4:
+                    tr.put(music_box(m, d * beat), t0 + swung(st - part * 4) * beat, pan=-0.1)
+        elif not intro:
+            # 合いの手: キラキラした分散和音
+            for k, b in enumerate((0.5, 1.5, 2.5, 3.5)):
+                tr.put(music_box(chord[k % 3] + 24 - (12 if k == 3 else 0), beat / 2), at(b), gain=0.6, pan=0.3)
+        else:
+            for k, m in enumerate(chord):
+                tr.put(music_box(m + 24, beat), t0 + k * beat / 3, gain=0.7)
+    return tr.buf
+
+
+STYLES = {"rock": compose_rock, "pop": compose_pop, "cute": compose_cute}
 
 
 # ======================================================================
