@@ -4,6 +4,7 @@
     python tools/add_bgm.py media/videos/xxx/1080p60/Scene.mp4 [--bpm 118] [--volume 0.5]
 
 動画の長さに合わせて BGM を合成し、<元のファイル名>_bgm.mp4 を同じ場所に書き出す。
+動画に効果音などの音声があれば、BGM と重ねる。
 """
 import argparse
 import subprocess
@@ -181,6 +182,15 @@ def video_duration(path):
     return float(r.stdout.strip())
 
 
+def has_audio(path):
+    r = subprocess.run(
+        ["ffprobe", "-v", "error", "-select_streams", "a", "-show_entries", "stream=index",
+         "-of", "csv=p=0", str(path)],
+        capture_output=True, text=True, check=True,
+    )
+    return bool(r.stdout.strip())
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("video", type=Path)
@@ -195,10 +205,15 @@ def main():
     with tempfile.TemporaryDirectory() as d:
         wav = Path(d) / "bgm.wav"
         wavfile.write(wav, SR, (music * 32767).astype(np.int16))
+        if has_audio(args.video):
+            # 効果音などの元の音声と BGM を重ねる
+            audio = ["-filter_complex", "[0:a][1:a]amix=inputs=2:duration=longest:normalize=0[a]",
+                     "-map", "0:v", "-map", "[a]"]
+        else:
+            audio = ["-map", "0:v", "-map", "1:a"]
         subprocess.run(
-            ["ffmpeg", "-loglevel", "error", "-y", "-i", str(args.video), "-i", str(wav),
-             "-map", "0:v", "-map", "1:a", "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
-             "-shortest", str(out)],
+            ["ffmpeg", "-loglevel", "error", "-y", "-i", str(args.video), "-i", str(wav), *audio,
+             "-c:v", "copy", "-c:a", "aac", "-b:a", "192k", "-t", f"{dur:.3f}", str(out)],
             check=True,
         )
     print(out)

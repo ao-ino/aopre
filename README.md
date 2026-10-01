@@ -56,3 +56,14 @@ python tools/add_bgm.py <動画> --bpm 128 --volume 0.4                         
 
 BGM はコードで合成したオリジナル（C–G–Am–F のポップ進行。ドラム・ベース・コード・メロディ入り）なので、著作権を気にせず使えます。
 動画の長さに合わせて自動で生成し、最後はフェードアウトします。
+動画に効果音が入っている場合は、BGM と重ねてミックスします。
+
+## 効果音
+
+`scenes/sfx.py` に合成効果音があります（初回に `media/sfx/` へ WAV を生成）。
+
+```python
+from sfx import pop, chime
+self.add_sound(pop(3))   # 「ポン」。数字が大きいほど高い音
+self.add_sound(chime())  # 正解の「キラーン」
+```

@@ -10,6 +10,7 @@
 from manim import *
 
 from common import jp
+from sfx import chime, pop
 
 H_COLOR = BLUE      # 横の線
 S_COLOR = GREEN     # 縦（斜め）の線
@@ -89,6 +90,14 @@ class Problem257(Scene):
         self.easier_way()
         self.big_case()
 
+    def lagged_fade_in(self, mobs, lag_ratio, run_time=2):
+        """順に FadeIn する LaggedStart。1つ出るごとにポンと鳴らす。"""
+        n = len(mobs)
+        d = run_time / (1 + lag_ratio * (n - 1))
+        for k in range(n):
+            self.add_sound(pop(k % 10), time_offset=k * lag_ratio * d, gain=-4)
+        return LaggedStart(*[FadeIn(x) for x in mobs], lag_ratio=lag_ratio)
+
     def clear_panel(self, *keep):
         """タイトルと keep 以外の右側パネルを消す。"""
         # 線は Create で個別にシーンへ追加されるので、keep の子孫もまとめて残す
@@ -150,6 +159,7 @@ class Problem257(Scene):
                     para = g.block(r, c, w, h)
                     counter.set_value(n)
                     unit.next_to(counter, RIGHT, buff=0.15)
+                    self.add_sound(pop(n - 1))
                     self.play(FadeIn(para), Indicate(counter, scale_factor=1.4), run_time=0.6)
                     self.wait(0.45)
                     self.play(FadeOut(para), run_time=0.4)
@@ -160,6 +170,7 @@ class Problem257(Scene):
         tot = VGroup(jp("合計", font_size=26), Integer(total, font_size=40, color=PICK), jp("個", font_size=26))
         tot.arrange(RIGHT, buff=0.2).move_to([PANEL_X, 1.35 - len(sizes) * 0.55 - 0.15, 0])
         line = Line(LEFT, RIGHT, color=GRAY).set_width(4).next_to(tot, UP, buff=0.12)
+        self.add_sound(chime(), gain=-6)
         self.play(Create(line), FadeIn(tot))
         self.wait(1.5)
         self.exp_total = total
@@ -199,7 +210,7 @@ class Problem257(Scene):
         # 例: 1×1 は 横3か所 × 縦2か所 → グリッドでも見せる
         cells = VGroup(*[g.block(r, c, 1, 1, opacity=0.4, stroke=3) for r in range(rows) for c in range(cols)])
         self.play(Indicate(col_f[0]), Indicate(row_f[0]), Indicate(counters[(1, 1)]),
-                  LaggedStart(*[FadeIn(x) for x in cells], lag_ratio=0.15), run_time=2)
+                  self.lagged_fade_in(cells, lag_ratio=0.15), run_time=2)
         self.play(FadeOut(cells))
         for (w, h) in [(2, 1), (2, 2)]:
             self.play(Indicate(col_f[w - 1]), Indicate(row_f[h - 1]), Indicate(counters[(w, h)]), run_time=1.2)
@@ -214,6 +225,7 @@ class Problem257(Scene):
         VGroup(lab, f).set_x(PANEL_X)
         self.play(FadeIn(lab), Write(f))
         ok = jp("数えた結果と一致！", font_size=22, color=PICK).next_to(f, DOWN, buff=0.2)
+        self.add_sound(chime())
         self.play(FadeIn(ok))
         self.wait(2.5)
 
@@ -235,7 +247,7 @@ class Problem257(Scene):
         one = VGroup(MathTex(r"1\times1", font_size=34), jp("だけで", font_size=24),
                      MathTex(r"6\times5=30", font_size=34), jp("個", font_size=24)).arrange(RIGHT, buff=0.15)
         one.next_to(sub, DOWN, buff=0.35)
-        self.play(LaggedStart(*[FadeIn(x) for x in cells], lag_ratio=0.06), FadeIn(one), run_time=2.5)
+        self.play(self.lagged_fade_in(cells, lag_ratio=0.06, run_time=2.5), FadeIn(one), run_time=2.5)
         self.wait(0.8)
         self.play(FadeOut(cells))
 
@@ -253,6 +265,7 @@ class Problem257(Scene):
         answer = jp("答  315 個", font_size=38, color=PICK, weight=BOLD)
         box = SurroundingRectangle(answer, color=PICK, buff=0.2)
         VGroup(answer, box).next_to(prod, DOWN, buff=0.35).set_x(PANEL_X)
+        self.add_sound(chime())
         self.play(Write(answer), Create(box))
         self.wait(2.5)
 
@@ -262,6 +275,8 @@ class Problem257(Scene):
         old = [l.get_stroke_width() for l in lines]
         para = g.para(i1, i2, j1, j2, stroke=0)
         self.play(lines.animate.set_stroke(PICK, width=width), run_time=0.6)
+        self.choice_n = getattr(self, "choice_n", 0) + 1
+        self.add_sound(pop(self.choice_n + 4))
         self.play(FadeIn(para), run_time=0.5)
         self.wait(hold)
         self.play(
@@ -301,6 +316,7 @@ class Problem257(Scene):
         self.play(g.h_lines.animate.set_stroke(width=7))
         self.play(FadeIn(h_row))
         self.play(g.h_lines.animate.set_stroke(width=4))
+        self.add_sound(chime())
         self.play(Write(prod))
         self.wait(2.5)
 
@@ -329,6 +345,7 @@ class Problem257(Scene):
         unit = jp("個", font_size=32, color=PICK).next_to(calc[-1], RIGHT, buff=0.15, aligned_edge=DOWN)
         self.play(FadeIn(unit))
         punch = jp("一発で解ける！", font_size=38, color=PICK, weight=BOLD).next_to(calc, DOWN, buff=0.45).set_x(PANEL_X)
+        self.add_sound(chime())
         self.play(Write(punch))
         self.play(Circumscribe(punch, color=PICK))
         self.wait(3)
