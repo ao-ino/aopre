@@ -47,23 +47,33 @@ class MyScene(Scene):
 - 日本語の文章は `jp("...")`（= `Text`）、数式は `MathTex(r"...")`（LaTeX）で書く
 - 値を動かしながら図を更新するなら `ValueTracker` + `always_redraw`（`derivative.py` 参照）
 
-## BGM を付ける
+## BGM と効果音を付ける
 
 ```bash
-python tools/add_bgm.py media/videos/p257_parallelograms/1080p60/Problem257.mp4   # → Problem257_bgm.mp4
-python tools/add_bgm.py <動画> --bpm 128 --volume 0.4                              # テンポ・音量を調整
+manim -qh scenes/p257_parallelograms.py Problem257                        # 映像 + 効果音タイミング(JSON)を出力
+python tools/add_audio.py media/videos/p257_parallelograms/1080p60/Problem257.mp4   # → Problem257_audio.mp4
+python tools/add_audio.py <動画> --style pop --bgm-volume 0.3             # BGM をポップに・音量調整
 ```
 
-BGM はコードで合成したオリジナル（C–G–Am–F のポップ進行。ドラム・ベース・コード・メロディ入り）なので、著作権を気にせず使えます。
-動画の長さに合わせて自動で生成し、最後はフェードアウトします。
-動画に効果音が入っている場合は、BGM と重ねてミックスします。
+- BGM・効果音はすべてコードで合成したオリジナルなので、著作権を気にせず使えます。
+  - `rock`（既定）: 140 BPM、Am–F–C–G。歪みギター（左右）・ベース・ドラム、サビにリードギター
+  - `pop`: 118 BPM、C–G–Am–F。エレピ・ベル系メロディ
+- 効果音が鳴る瞬間だけ BGM を少し下げる（ダッキング）ので、効果音が埋もれません。
 
-## 効果音
-
-`scenes/sfx.py` に合成効果音があります（初回に `media/sfx/` へ WAV を生成）。
+### シーンで効果音を鳴らす
 
 ```python
-from sfx import pop, chime
-self.add_sound(pop(3))   # 「ポン」。数字が大きいほど高い音
-self.add_sound(chime())  # 正解の「キラーン」
+from sfx import SfxMixin
+
+class MyScene(SfxMixin, Scene):
+    def construct(self):
+        self.sfx("pop", step=3)   # 次のアニメーション開始時に「ポン」（step が大きいほど高い）
+        self.play(FadeIn(shape, rate_func=rush_from))
+        self.sfx("chime")         # 「キラーン」
+        self.play(Write(answer))
 ```
+
+manim の `add_sound` は使いません（キャッシュ済みアニメーションの直後だと音が消え、
+音声トラックも映像から少しずつずれるため）。`self.sfx` は映像フレーム基準の時刻を
+`media/audio_events/<Scene>.json` に記録し、`tools/add_audio.py` がサンプル単位で配置します。
+そのため `manim.cfg` でキャッシュを無効にしています。
