@@ -46,3 +46,13 @@ class MyScene(Scene):
 
 - 日本語の文章は `jp("...")`（= `Text`）、数式は `MathTex(r"...")`（LaTeX）で書く
 - 値を動かしながら図を更新するなら `ValueTracker` + `always_redraw`（`derivative.py` 参照）
+
+## BGM を付ける
+
+```bash
+python tools/add_bgm.py media/videos/p257_parallelograms/1080p60/Problem257.mp4   # → Problem257_bgm.mp4
+python tools/add_bgm.py <動画> --bpm 128 --volume 0.4                              # テンポ・音量を調整
+```
+
+BGM はコードで合成したオリジナル（C–G–Am–F のポップ進行。ドラム・ベース・コード・メロディ入り）なので、著作権を気にせず使えます。
+動画の長さに合わせて自動で生成し、最後はフェードアウトします。
