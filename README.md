@@ -29,6 +29,7 @@ manim -s   scenes/derivative.py SecantToTangent  # 最後のフレームだけ P
 | `scenes/pythagoras.py` | `Pythagoras` | 三平方の定理を各辺の正方形の面積で見せる |
 | `scenes/derivative.py` | `SecantToTangent` | 割線が接線に近づき、微分係数になる様子 |
 | `scenes/unit_circle.py` | `SineFromCircle` | 単位円上の点の高さが sin 波を描く |
+| `scenes/p257_parallelograms.py` | `Problem257` | 問題257: 平行線でできる平行四辺形の個数（6C2 × 7C2 = 315） |
 
 ## 新しいシーンの書き方
 
