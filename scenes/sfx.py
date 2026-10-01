@@ -7,7 +7,7 @@ tools/add_audio.py がサンプル単位で正確に合成する。
 
     class MyScene(SfxMixin, Scene):
         def construct(self):
-            self.sfx("pop", step=3)     # ポン（step が大きいほど高い）
+            self.sfx("pop", step=3)     # ポン（step=0,1,2,… がド,レ,ミ,…）
             self.sfx("chime")           # キラーン
 """
 import json

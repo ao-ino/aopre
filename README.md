@@ -67,7 +67,7 @@ from sfx import SfxMixin
 
 class MyScene(SfxMixin, Scene):
     def construct(self):
-        self.sfx("pop", step=3)   # 次のアニメーション開始時に「ポン」（step が大きいほど高い）
+        self.sfx("pop", step=3)   # 次のアニメーション開始時に「ポン」（step=0,1,2,… がド,レ,ミ,…）
         self.play(FadeIn(shape, rate_func=rush_from))
         self.sfx("chime")         # 「キラーン」
         self.play(Write(answer))

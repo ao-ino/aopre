@@ -95,7 +95,7 @@ class Problem257(SfxMixin, Scene):
         n = len(mobs)
         d = run_time / (1 + lag_ratio * (n - 1))
         for k in range(n):
-            self.sfx("pop", offset=k * lag_ratio * d, step=k % 10, gain_db=-5)
+            self.sfx("pop", offset=k * lag_ratio * d, step=k % 8, gain_db=-5)  # ド〜高いドを繰り返す
         return LaggedStart(*[FadeIn(x, rate_func=rush_from) for x in mobs], lag_ratio=lag_ratio)
 
     def clear_panel(self, *keep):
@@ -277,7 +277,7 @@ class Problem257(SfxMixin, Scene):
         para = g.para(i1, i2, j1, j2, stroke=0)
         self.play(lines.animate.set_stroke(PICK, width=width), run_time=0.6)
         self.choice_n = getattr(self, "choice_n", 0) + 1
-        self.sfx("pop", step=self.choice_n + 4)
+        self.sfx("pop", step=self.choice_n - 1)
         self.play(FadeIn(para, rate_func=rush_from), run_time=0.5)
         self.wait(hold)
         self.play(
