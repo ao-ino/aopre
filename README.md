@@ -79,3 +79,20 @@ manim の `add_sound` は使いません（キャッシュ済みアニメーシ�
 音声トラックも映像から少しずつずれるため）。`self.sfx` は映像フレーム基準の時刻を
 `media/audio_events/<Scene>.json` に記録し、`tools/add_audio.py` がサンプル単位で配置します。
 そのため `manim.cfg` でキャッシュを無効にしています。
+
+## Web 版（React + framer-motion）
+
+`web/` に、問題257を触って理解できる教材ページがあります（Vite + React + TypeScript + [Motion](https://motion.dev/)＝旧 framer-motion）。
+
+1. **数えてみよう** — 横3本・縦4本で「次へ」を押すと、小さい順・左上から平行四辺形が光り、大きさ別の個数表とパターン（横の場所 × 縦の場所）が出る
+2. **2本ずつ選ぶ** — 横6本・縦7本の線をクリックして縦2本・横2本を選ぶと平行四辺形が現れる。見つけた数 / 315 を記録
+3. **本数を変える** — スライダーで本数を変えると ₙC₂ × ₘC₂ が即座に計算される（縦20・横30 → 82,650）
+
+効果音（ドレミのポン・キラーン）は Web Audio で動画版と同じ音作り。
+
+```bash
+cd web
+npm install
+npm run dev     # 開発サーバー
+npm run build   # dist/index.html（1ファイル）と dist/artifact.html（Artifact 公開用）を生成
+```
